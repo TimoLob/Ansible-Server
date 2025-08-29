@@ -42,7 +42,8 @@ base:
 
 ddns:
 	ansible-playbook -i {{INV}} {{B}} {{PLAYS}}/05-ddns.yml
-
+wireguard:
+	ansible-playbook -i {{INV}} {{B}} {{PLAYS}}/15-wireguard.yml
 security:
 	ansible-playbook -i {{INV}} {{B}} {{PLAYS}}/10-security.yml
 auth:
