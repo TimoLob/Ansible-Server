@@ -11,7 +11,7 @@
     make_user_passwordless_sudo: true
     disable_root_ssh: true
     disable_password_auth: true
-    prepare_docker_group: true      # safe even if Docker isn't installed yet
+    prepare_docker_group: true
 
   pre_tasks:
     - name: Ensure dependencies for managing users/keys exist (usually present by default)
