@@ -50,3 +50,4 @@
         volumes:
           - /var/run/docker.sock:/var/run/docker.sock:ro
           - "{{ traefik_dir }}/letsencrypt:/letsencrypt:rw"
+          - "{{ traefik_auth_dir }}:/auth:ro"

@@ -2,12 +2,11 @@
 docker_users:
   - timo
 
-# Let's Encrypt
-letsencrypt_email: timo.lobitz@gmail.com
-
 
 # Paths
 traefik_dir: /srv/traefik
+traefik_auth_dir: "{{ traefik_dir }}/auth"
+
 privatebin_dir: /srv/privatebin
 
 # Images

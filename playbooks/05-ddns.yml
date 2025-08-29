@@ -1,5 +1,5 @@
 ---
-- name: DDNS: FreeMyIP cron
+- name: DDNS - FreeMyIP cron
   hosts: vps
   become: true
 
@@ -22,8 +22,11 @@
         hour: "0"
         job: "curl -s '{{ freemyip_update_url }}' >/dev/null 2>&1"
 
-    - name: Run initial FreeMyIP update now (hidden in logs)
-      ansible.builtin.shell: "curl -s '{{ freemyip_update_url }}' >/dev/null 2>&1"
-      args:
-        warn: false
+    - name: Run initial FreeMyIP update now
+      ansible.builtin.uri:
+        url: "{{ freemyip_update_url }}"
+        method: GET
+        status_code: 200
+        timeout: 15
+      changed_when: false
       no_log: true

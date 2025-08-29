@@ -1,4 +1,3 @@
----
 - name: PrivateBin service
   hosts: vps
   become: true
@@ -22,12 +21,27 @@
         restart_policy: unless-stopped
         networks:
           - name: traefik
-        # PrivateBin listens on 8080 in this image
         volumes:
           - privatebin_data:/srv/data
         labels:
-          - "traefik.enable=true"
-          - "traefik.http.routers.privatebin.rule=Host(`{{ privatebin_domain }}`)"
-          - "traefik.http.routers.privatebin.entrypoints=websecure"
-          - "traefik.http.routers.privatebin.tls.certresolver=le"
-          - "traefik.http.services.privatebin.loadbalancer.server.port=8080"
+          labels:
+          traefik.enable: "true"
+
+          # OPEN: allow viewing & static assets (no auth)
+          traefik.http.routers.privatebin-open.rule: "Host(`{{ privatebin_domain }}`) && (Method(`GET`) || Method(`HEAD`))"
+          traefik.http.routers.privatebin-open.entrypoints: "websecure"
+          traefik.http.routers.privatebin-open.tls.certresolver: "le"
+
+          # WRITE: require BasicAuth for creating/deleting/comments (POST/DELETE)
+          traefik.http.routers.privatebin-post.rule: "Host(`{{ privatebin_domain }}`) && (Method(`POST`) || Method(`DELETE`))"
+          traefik.http.routers.privatebin-post.entrypoints: "websecure"
+          traefik.http.routers.privatebin-post.tls.certresolver: "le"
+          traefik.http.routers.privatebin-post.middlewares: "privatebin-auth"
+
+          # Service
+          traefik.http.services.privatebin.loadbalancer.server.port: "8080"
+
+          # BasicAuth middleware (Traefik side)
+          traefik.http.middlewares.privatebin-auth.basicauth.usersfile: "/auth/usersfile"
+          traefik.http.middlewares.privatebin-auth.basicauth.realm: "PrivateBin write access"
+ 

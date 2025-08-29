@@ -1,5 +1,5 @@
 ---
-- name: Security: UFW and fail2ban
+- name: Security - UFW and fail2ban
   hosts: vps
   become: true
 

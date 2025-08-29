@@ -1,0 +1,48 @@
+---
+- name: Traefik auth (BasicAuth users file)
+  hosts: vps
+  become: true
+
+  vars:
+    users_file_path: "{{ traefik_auth_dir }}/usersfile"
+    privatebin_auth_force: false # set to true once to force a reset
+
+  tasks:
+    - name: Ensure deps for htpasswd (bcrypt)
+      ansible.builtin.package:
+        name: python3-passlib
+        state: present
+        update_cache: true
+
+    - name: Ensure auth directory exists
+      ansible.builtin.file:
+        path: "{{ traefik_auth_dir }}"
+        state: directory
+        mode: "0755"
+
+    # Optional: remove the user first to force a reset when requested
+    - name: Remove existing BasicAuth user (force reset)
+      community.general.htpasswd:
+        path: "{{ users_file_path }}"
+        name: "{{ privatebin_auth_user }}"
+        state: absent
+      when: privatebin_auth_force | bool
+      register: removed_user
+
+    - name: Create/Update htpasswd users file (bcrypt)
+      community.general.htpasswd:
+        path: "{{ users_file_path }}"
+        name: "{{ privatebin_auth_user }}"
+        password: "{{ privatebin_auth_password }}"
+        crypt_scheme: bcrypt
+        state: present
+        create: true
+      no_log: true
+      notify: Restart Traefik
+
+  handlers:
+    - name: Restart Traefik
+      community.docker.docker_container:
+        name: traefik
+        state: started
+        restart: true

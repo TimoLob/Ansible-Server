@@ -1,5 +1,5 @@
 ---
-- name: Base: install Docker & Python SDK, create traefik network
+- name: Base - install Docker & Python SDK, create traefik network
   hosts: vps
   become: true
 
@@ -10,15 +10,11 @@
     - geerlingguy.docker
 
   tasks:
-    - name: Ensure python3-pip present
+    - name: Ensure Docker SDK for Python via apt
       ansible.builtin.package:
-        name: python3-pip
+        name: python3-docker
         state: present
         update_cache: true
-
-    - name: Install Docker SDK for Python (required by community.docker)
-      ansible.builtin.pip:
-        name: docker
 
     - name: Ensure 'traefik' Docker network exists
       community.docker.docker_network:
