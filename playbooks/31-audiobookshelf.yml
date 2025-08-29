@@ -1,0 +1,22 @@
+- hosts: vps
+  become: true
+  tasks:
+    - community.docker.docker_volume: { name: abs_config }
+    - community.docker.docker_volume: { name: abs_metadata }
+    - community.docker.docker_container:
+        name: audiobookshelf
+        image: ghcr.io/advplyr/audiobookshelf:latest
+        restart_policy: unless-stopped
+        networks: [{ name: traefik }]
+        # Mount your library path on the VPS if you have one, or attach later
+        volumes:
+          - "abs_config:/config"
+          - "abs_metadata:/metadata"
+          - "/srv/media/audiobooks:/audiobooks:ro"
+          - "/srv/media/podcasts:/podcasts:ro"
+        labels:
+          traefik.enable: "true"
+          traefik.http.routers.abs.rule: "Host(`books.onyx-bridge.freemyip.com`)"
+          traefik.http.routers.abs.entrypoints: "websecure"
+          traefik.http.routers.abs.tls.certresolver: "le"
+          traefik.http.services.abs.loadbalancer.server.port: "80"

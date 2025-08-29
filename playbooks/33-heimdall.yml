@@ -1,0 +1,16 @@
+- hosts: vps
+  become: true
+  tasks:
+    - community.docker.docker_container:
+        name: heimdall
+        image: lscr.io/linuxserver/heimdall:latest
+        restart_policy: unless-stopped
+        networks: [{ name: traefik }]
+        labels:
+          traefik.enable: "true"
+          traefik.http.routers.heimdall.rule: "Host(`onyx-bridge.freemyip.com`)"
+          traefik.http.routers.heimdall.entrypoints: "websecure"
+          traefik.http.routers.heimdall.tls.certresolver: "le"
+          traefik.http.services.heimdall.loadbalancer.server.port: "80"
+        volumes:
+          - "/srv/heimdall:/config:rw"

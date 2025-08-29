@@ -55,8 +55,16 @@ traefik:
 privatebin:
 	ansible-playbook -i {{INV}} {{B}} {{PLAYS}}/30-privatebin.yml
 
+audiobookshelf:
+	ansible-playbook -i {{INV}} {{B}} {{PLAYS}}/31-audiobookshelf.yml
+
+draw:
+	ansible-playbook -i {{INV}} {{B}} {{PLAYS}}/32-excalidraw.yml
+
+heimdall:
+	ansible-playbook -i {{INV}} {{B}} {{PLAYS}}/33-heimdall.yml
 # Run everything in order (idempotent)
-up: deps doctor base ddns security auth traefik privatebin
+up: deps doctor base ddns security auth traefik privatebin heimdall
 
 # Re-deploy only app layer (fast while iterating)
 up-fast: traefik privatebin

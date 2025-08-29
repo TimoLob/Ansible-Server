@@ -1,0 +1,14 @@
+- hosts: vps
+  become: true
+  tasks:
+    - community.docker.docker_container:
+        name: excalidraw
+        image: excalidraw/excalidraw:latest
+        restart_policy: unless-stopped
+        networks: [{ name: traefik }]
+        labels:
+          traefik.enable: "true"
+          traefik.http.routers.excalidraw.rule: "Host(`draw.onyx-bridge.freemyip.com`)"
+          traefik.http.routers.excalidraw.entrypoints: "websecure"
+          traefik.http.routers.excalidraw.tls.certresolver: "le"
+          traefik.http.services.excalidraw.loadbalancer.server.port: "80"
