@@ -1,0 +1,28 @@
+---
+- name: WireGuard client (wg-quick) on VPS
+  hosts: vps
+  become: true
+
+  vars_files:
+    - "../host_vars/{{ inventory_hostname }}/wireguard.yml"
+
+  tasks:
+    - name: Install wireguard tools
+      ansible.builtin.package:
+        name: wireguard-tools
+        state: present
+        update_cache: true
+
+    - name: Write /etc/wireguard/wg0.conf
+      ansible.builtin.copy:
+        dest: /etc/wireguard/wg0.conf
+        content: "{{ wg0_conf }}"
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Enable & start wg-quick@wg0
+      ansible.builtin.systemd:
+        name: wg-quick@wg0
+        state: started
+        enabled: true

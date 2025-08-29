@@ -1,4 +1,5 @@
 # local secrets
 host_vars/*/secrets.yml
+host_vars/*/wireguard.yml
 secrets*.yml
 *.vault_password
