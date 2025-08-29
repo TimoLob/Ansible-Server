@@ -1,0 +1,15 @@
+# Users
+docker_users:
+  - timo
+
+# Let's Encrypt
+letsencrypt_email: timo.lobitz@gmail.com
+
+
+# Paths
+traefik_dir: /srv/traefik
+privatebin_dir: /srv/privatebin
+
+# Images
+traefik_image: traefik:latest
+privatebin_image: privatebin/nginx-fpm-alpine:latest

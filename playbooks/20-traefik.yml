@@ -1,0 +1,52 @@
+---
+- name: Traefik edge proxy
+  hosts: vps
+  become: true
+
+  vars:
+    acme_path: "{{ traefik_dir }}/letsencrypt/acme.json"
+
+  tasks:
+    - name: Create Traefik directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - "{{ traefik_dir }}"
+        - "{{ traefik_dir }}/letsencrypt"
+
+    - name: Ensure acme.json exists with strict perms
+      ansible.builtin.copy:
+        dest: "{{ acme_path }}"
+        content: ""
+        force: no
+        mode: "0600"
+      changed_when: false
+
+    - name: Run Traefik
+      community.docker.docker_container:
+        name: traefik
+        image: "{{ traefik_image }}"
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik
+        ports:
+          - "80:80"
+          - "443:443"
+        command:
+          - "--providers.docker=true"
+          - "--providers.docker.exposedbydefault=false"
+          - "--entrypoints.web.address=:80"
+          - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+          - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+          - "--entrypoints.websecure.address=:443"
+          - "--certificatesresolvers.le.acme.email={{ letsencrypt_email }}"
+          - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
+          - "--certificatesresolvers.le.acme.httpchallenge=true"
+          - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
+          - "--api.dashboard=true"     # not exposed unless you add a router later
+          - "--log.level=INFO"
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock:ro
+          - "{{ traefik_dir }}/letsencrypt:/letsencrypt:rw"

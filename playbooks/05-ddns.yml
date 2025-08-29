@@ -1,0 +1,29 @@
+---
+- name: DDNS: FreeMyIP cron
+  hosts: vps
+  become: true
+
+  vars:
+    freemyip_update_url: "https://freemyip.com/update?token={{ freemyip_token }}&domain={{ freemyip_domain }}"
+
+  pre_tasks:
+    - name: Ensure curl is installed
+      ansible.builtin.package:
+        name: curl
+        state: present
+        update_cache: true
+
+  tasks:
+    - name: Create daily cron to update FreeMyIP at 00:00
+      ansible.builtin.cron:
+        name: "freemyip DDNS update"
+        user: root
+        minute: "0"
+        hour: "0"
+        job: "curl -s '{{ freemyip_update_url }}' >/dev/null 2>&1"
+
+    - name: Run initial FreeMyIP update now (hidden in logs)
+      ansible.builtin.shell: "curl -s '{{ freemyip_update_url }}' >/dev/null 2>&1"
+      args:
+        warn: false
+      no_log: true

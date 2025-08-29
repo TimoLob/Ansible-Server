@@ -1,0 +1,4 @@
+# local secrets
+host_vars/*/secrets.yml
+secrets*.yml
+*.vault_password

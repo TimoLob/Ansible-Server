@@ -1,0 +1,92 @@
+---
+- name: Bootstrap a fresh Ubuntu VPS
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    new_username: timo
+    ssh_public_keys:                # add one or more public keys here
+      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGTHZnUGkZHguDxK7GshXshSg1W3ILxYgf8+8eObV9um timo.lobitz@gmail.com"
+    make_user_passwordless_sudo: true
+    disable_root_ssh: true
+    disable_password_auth: true
+    prepare_docker_group: true      # safe even if Docker isn't installed yet
+
+  pre_tasks:
+    - name: Ensure dependencies for managing users/keys exist (usually present by default)
+      apt:
+        name: ["sudo","openssh-server"]
+        state: present
+        update_cache: yes
+
+  tasks:
+    - name: Create non-root user
+      user:
+        name: "{{ new_username }}"
+        shell: /bin/bash
+        groups: sudo
+        append: true
+        create_home: true
+
+    - name: Ensure .ssh directory exists
+      file:
+        path: "/home/{{ new_username }}/.ssh"
+        state: directory
+        owner: "{{ new_username }}"
+        group: "{{ new_username }}"
+        mode: "0700"
+
+    - name: Install authorized SSH keys
+      authorized_key:
+        user: "{{ new_username }}"
+        state: present
+        key: "{{ item }}"
+      loop: "{{ ssh_public_keys }}"
+
+    - name: (Optional) passwordless sudo for the user
+      copy:
+        dest: "/etc/sudoers.d/90-{{ new_username }}"
+        mode: "0440"
+        content: |
+          {{ new_username }} ALL=(ALL) NOPASSWD:ALL
+      when: make_user_passwordless_sudo
+
+    - name: (Optional) ensure password-based sudo (remove NOPASSWD file)
+      file:
+        path: "/etc/sudoers.d/90-{{ new_username }}"
+        state: absent
+      when: not make_user_passwordless_sudo
+
+    - name: (Optional) create docker group for later
+      group:
+        name: docker
+        state: present
+      when: prepare_docker_group
+
+    - name: Harden SSH - disable root login
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?\s*PermitRootLogin\s+.*'
+        line: 'PermitRootLogin no'
+        create: no
+        backrefs: no
+      notify: Restart ssh
+      when: disable_root_ssh
+
+    - name: Harden SSH - disable password authentication
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?\s*PasswordAuthentication\s+.*'
+        line: 'PasswordAuthentication no'
+        create: no
+        backrefs: no
+      notify: Restart ssh
+      when: disable_password_auth
+
+  handlers:
+    - name: Restart ssh
+      service:
+        name: ssh
+        state: restarted
+

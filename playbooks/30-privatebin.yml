@@ -1,0 +1,33 @@
+---
+- name: PrivateBin service
+  hosts: vps
+  become: true
+
+  tasks:
+    - name: Create PrivateBin dirs
+      ansible.builtin.file:
+        path: "{{ privatebin_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Ensure PrivateBin named volume (for data) exists
+      community.docker.docker_volume:
+        name: privatebin_data
+        state: present
+
+    - name: Run PrivateBin
+      community.docker.docker_container:
+        name: privatebin
+        image: "{{ privatebin_image }}"
+        restart_policy: unless-stopped
+        networks:
+          - name: traefik
+        # PrivateBin listens on 8080 in this image
+        volumes:
+          - privatebin_data:/srv/data
+        labels:
+          - "traefik.enable=true"
+          - "traefik.http.routers.privatebin.rule=Host(`{{ privatebin_domain }}`)"
+          - "traefik.http.routers.privatebin.entrypoints=websecure"
+          - "traefik.http.routers.privatebin.tls.certresolver=le"
+          - "traefik.http.services.privatebin.loadbalancer.server.port=8080"
